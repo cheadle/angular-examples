@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Tabs Demo</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  </head>
+  <body ng-app="tabsApp">
+
+    <div class="container">
+      <div class="row" ng-controller="MainCtrl">
+        <div class="col-md-12">
+          <h1>Tabs Demo</h1>
+          <ul class="nav nav-tabs">
+            <li ng-class="{active: tab == model.selectedTab}" ng-repeat="tab in tabs">
+              <a ng-href="#" ng-click="showTabContent($index)">{{tab.name}}</a>
+            </li>
+          </ul>
+          <div>
+            <h3>{{model.selectedTab.content}}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      angular.module('tabsApp', []).controller('MainCtrl', function ($scope) {
+        $scope.tabs = [
+          { name: 'Tab 1', content: 'Tab 1 Content' },
+          { name: 'Tab 2', content: 'Tab 2 Content' },
+          { name: 'Tab 3', content: 'Tab 3 Content' }
+        ];
+        $scope.model = {
+          selectedTab: $scope.tabs[localStorage.getItem("selectedTab")] || $scope.tabs[0]
+        }
+        $scope.showTabContent = function (index) {
+          $scope.model.selectedTab = $scope.tabs[index];
+          localStorage.setItem("selectedTab", index);
+        };
+      });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>API Demo</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-mocks.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width">
+  </head>
+  <body ng-app="apiApp">
+
+    <div class="container">
+      <div class="row" ng-controller="MainCtrl">
+        <div class="col-md-12">
+          <h1>API Demo</h1>
+          <h3>Click an item to see stock/price data</h3>
+          <a ng-href="#" ng-click="getProduct('Ghost Chili Salsa')">Ghost Chili Salsa</a>
+          <a ng-href="#" ng-click="getProduct('Mild Salsa')">Mild Salsa</a>
+          <a ng-href="#" ng-click="getProduct('Queso Surprise')">Queso Surprise</a>
+          <div ng-show="selectedProduct">
+            <h3>Results</h3>
+            <p>In-stock results for {{selectedProduct}}</p>
+            <ul>
+              <li ng-repeat="item in stock">{{item}}</li>
+            </ul>
+            <p>Best price for {{selectedProduct}}</p>
+            <ul>
+              <li>{{best.store}} - {{best.price | currency}}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      angular.module('apiApp', ['ngMockE2E']);
+
+      // mock xhr
+      angular.module('apiApp').run(function($httpBackend) {
+        vendors = [
+          {
+            "name": "Salsas R Us",
+            "inventory": {
+              "Ghost Chili Salsa": {"price": 7, "quantity": 17},
+              "Mild Salsa": {"price": 4.5, "quantity": 0}
+            }
+          },
+          {
+            "name": "Best Salsa, Ltd.",
+            "inventory": {
+              "Ghost Chili Salsa": {"price": 6, "quantity": 10},
+              "Mild Salsa": {"price": 5, "quantity": 3},
+              "Queso Surprise": {"price": 11, "quantity": 7}
+            }
+          }
+        ];
+        $httpBackend.whenGET('/vendors').respond(vendors);
+      });
+
+      // vendor listing service.
+      angular.module('apiApp').factory('VendorListing', function() {
+        var vendors = [];
+
+        return {
+
+          init: function(response) {
+            vendors = response.data;
+          },
+
+          inStock: function(product) {
+            var vendorsWithStock = [];
+
+            _.each(vendors, function(vendor) {
+              if(product in vendor.inventory && vendor.inventory[product].quantity > 0) {
+                vendorsWithStock.push(vendor.name);
+              };
+            });
+
+            return vendorsWithStock;
+          },
+
+          bestPrice: function(product) {
+            var prices = [];
+
+            _.each(vendors, function(vendor) {
+              if(product in vendor.inventory && vendor.inventory[product].quantity > 0) {
+                prices.push({ store: vendor.name, price: vendor.inventory[product].price });
+              };
+            });
+
+            var bestPrice = _.min(prices, function(item) {
+              return item.price;
+            });
+
+            return bestPrice;
+          }
+        }
+      });
+
+      // demo ctrl
+      angular.module('apiApp').controller('MainCtrl', function ($scope, $http, VendorListing) {
+        $http.get('/vendors').then(function(response) {
+          VendorListing.init(response);
+        });
+
+        $scope.getProduct = function(name) {
+          $scope.selectedProduct = name;
+          $scope.stock = VendorListing.inStock(name);
+          $scope.best = VendorListing.bestPrice(name);
+        };
+      });
+  </script>
+
+</body>
+</html>
